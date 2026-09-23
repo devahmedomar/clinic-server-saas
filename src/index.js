@@ -23,7 +23,7 @@ app.use(
     // Comma-separated list in CLIENT_ORIGIN (e.g. http://localhost:4200,https://your-app.vercel.app)
     origin(origin, cb) {
       if (!origin) return cb(null, true);
-      const allowed = env.clientOrigin.split(',').map((s) => s.trim());
+      const allowed = (env.clientOrigin || '').split(',').map((s) => s.trim());
       if (allowed.includes('*') || allowed.includes(origin)) return cb(null, true);
       return cb(new Error(`Origin ${origin} not allowed by CORS`));
     },
@@ -80,6 +80,9 @@ app.use('/api/owner', ownerRoutes);
 app.use((err, _req, res, _next) => {
   if (err?.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ message: 'File too large (max 8 MB)' });
+  }
+  if (err?.type === 'entity.parse.failed') {
+    return res.status(400).json({ message: 'Invalid JSON body' });
   }
   if (err?.name === 'ValidationError') {
     return res.status(400).json({ message: err.message });
