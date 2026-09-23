@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { env } from './config/env.js';
 import { connectDb } from './config/db.js';
+import { openapiSpec } from './config/openapi.js';
 import authRoutes from './routes/auth.routes.js';
 import patientRoutes from './routes/patients.routes.js';
 import appointmentRoutes from './routes/appointments.routes.js';
@@ -32,6 +34,9 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
+
+app.get('/api-docs.json', (_req, res) => res.json(openapiSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
