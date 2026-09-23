@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import swaggerUi from 'swagger-ui-express';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { env } from './config/env.js';
@@ -36,7 +35,35 @@ app.use(express.json({ limit: '1mb' }));
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 app.get('/api-docs.json', (_req, res) => res.json(openapiSpec));
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
+const SWAGGER_CDN = 'https://unpkg.com/swagger-ui-dist@5';
+app.get(/^\/api-docs\/?$/, (_req, res) => {
+  res.type('html').send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clinics Management SaaS API — Swagger</title>
+  <link rel="stylesheet" href="${SWAGGER_CDN}/swagger-ui.css" />
+  <style>html, body { margin: 0; }</style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="${SWAGGER_CDN}/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = function () {
+      window.ui = SwaggerUIBundle({
+        url: '/api-docs.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [SwaggerUIBundle.presets.apis],
+        layout: 'BaseLayout',
+        tryItOutEnabled: true,
+      });
+    };
+  </script>
+</body>
+</html>`);
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
